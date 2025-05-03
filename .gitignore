@@ -1,0 +1,8 @@
+# dependencies
+/node_modules
+<<<<<<< HEAD
+access.log
+=======
+access.log
+.env
+>>>>>>> 333c43c (reset repo then uplaod)
