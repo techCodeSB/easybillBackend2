@@ -1,6 +1,7 @@
 const { getId } = require('../helper/getIdFromToken');
 const debitNoteModel = require('../models/debitnote.model');
 const userModel = require('../models/user.model');
+const Log = require("../helper/insertLog");
 
 
 
@@ -8,7 +9,7 @@ const userModel = require('../models/user.model');
 const add = async (req, res) => {
   const {
     token, party, debitNoteNumber, debitNoteDate, items, discountType,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
   if ([token, party, debitNoteNumber, debitNoteDate, items]
@@ -56,6 +57,10 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Debitnote", finalAmount, '', 'debitnote');
+
 
     return res.status(200).json(insert);
 
@@ -242,8 +247,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await purchaseReturnModel.find({...query, isDel: false}).countDocuments();
-  let allData = await purchaseReturnModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await purchaseReturnModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await purchaseReturnModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

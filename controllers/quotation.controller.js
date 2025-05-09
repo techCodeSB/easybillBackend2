@@ -2,13 +2,14 @@ const { getId } = require('../helper/getIdFromToken');
 const quotationModel = require('../models/quotation.model');
 const userModel = require('../models/user.model');
 const companyModel = require('../models/company.model');
+const Log = require('../helper/insertLog');
 
 
 
 const add = async (req, res) => {
   const {
     token, party, quotationNumber, estimateDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id, billStatus
+    discountPercentage, additionalCharge, note, terms, update, id, billStatus, finalAmount
   } = req.body;
 
 
@@ -86,6 +87,11 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Quotation creation failed' });
     }
+
+ 
+    // insert party log;
+    await Log.insertPartyLog(token, insert._id, party, "Quotation", finalAmount, '', 'quotation');
+
 
     return res.status(200).json(insert);
 

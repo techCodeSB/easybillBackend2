@@ -1,12 +1,13 @@
 const { getId } = require('../helper/getIdFromToken');
 const partyModel = require('../models/party.model');
+const PartyLog = require('../models/partylog.model');
 const userModel = require('../models/user.model');
 
 
 
 // Add controller;
 const add = async (req, res) => {
-  const { token, name, type, contactNumber, billingAddress, shippingAddress,  email,
+  const { token, name, type, contactNumber, billingAddress, shippingAddress, email,
     pan, gst, openingBalance, details, update, id, creditPeriod, creditLimit, dob, partyCategory
   } = req.body;
 
@@ -32,7 +33,7 @@ const add = async (req, res) => {
         $set: {
           name, type, contactNumber, billingAddress, email,
           pan, gst, openingBalance, details,
-          shippingAddress,pan, gst, openingBalance, details, partyCategory: partyCategory || null, 
+          shippingAddress, pan, gst, openingBalance, details, partyCategory: partyCategory || null,
           shippingAddress, creditPeriod, creditLimit, dob
 
         }
@@ -209,7 +210,47 @@ const restore = async (req, res) => {
 
 
 
+const getLog = async (req, res) => {
+  const { token, partyId } = req.body;
+  const { page, limit } = req.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  if (!token || !partyId) {
+    return res.status(500).json({ err: "invalid user", get: false })
+  }
+
+  try {
+    const getInfo = await getId(token);
+    const getUser = await userModel.findOne({ _id: getInfo._id });
+    const totalData = await PartyLog.countDocuments({
+      companyId: getUser.activeCompany
+    });
+
+
+    const getLogs = await PartyLog.find({
+      partyId, companyId: getUser.activeCompany,
+      userId: getInfo._id
+    }).populate('invoiceId').populate("partyId").skip(skip).limit(limit);
+
+
+    if (!getLogs) {
+      return res.status(500).json({ err: "No logs found", get: false });
+    }
+
+    return res.status(200).json({ data: getLogs, totalData });
+
+
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ err: "Something went wrong", get: false });
+  }
+
+
+}
+
+
+
 
 module.exports = {
-  add, get, remove, restore
+  add, get, remove, restore, getLog
 }

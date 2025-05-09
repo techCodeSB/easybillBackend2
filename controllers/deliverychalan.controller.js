@@ -2,6 +2,7 @@ const { getId } = require('../helper/getIdFromToken');
 const deliverChalanModel = require('../models/deliverychalan.model');
 const userModel = require('../models/user.model');
 const companyModel = require('../models/company.model');
+const Log = require("../helper/insertLog");
 
 
 
@@ -9,7 +10,7 @@ const companyModel = require('../models/company.model');
 const add = async (req, res) => {
   const {
     token, party, chalanNumber, chalanDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
   if ([token, party, chalanNumber, chalanDate, validDate, items]
@@ -65,6 +66,11 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Chalan creation failed' });
     }
 
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'deliverychalan');
+
+    
     return res.status(200).json(insert);
 
   } catch (err) {
@@ -247,8 +253,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await deliverChalanModel.find({...query, isDel: false}).countDocuments();
-  let allData = await deliverChalanModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await deliverChalanModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await deliverChalanModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

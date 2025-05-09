@@ -2,14 +2,14 @@ const { getId } = require('../helper/getIdFromToken');
 const purchaseReturnModel = require('../models/purchasereturn.model');
 const userModel = require('../models/user.model');
 const itemModel = require('../models/item.model');
-
+const Log = require("../helper/insertLog");
 
 
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
     token, party, purchaseReturnNumber, returnDate, items, discountType,
-    discountAmount, discountPercentage, additionalCharge, note, terms, update, id
+    discountAmount, discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
   if ([token, party, purchaseReturnNumber, returnDate, items]
@@ -57,6 +57,10 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
+
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', purchasereturn);
 
     return res.status(200).json(insert);
 

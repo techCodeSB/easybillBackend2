@@ -3,13 +3,13 @@ const salesReturnModel = require('../models/salesreturn.model');
 const userModel = require('../models/user.model');
 const itemModel = require('../models/item.model');
 const companyModel = require('../models/company.model');
-
+const Log = require("../helper/insertLog");
 
 
 // Create and Save a new Quotation;
 const add = async (req, res) => {
   const {
-    token, party, salesReturnNumber, returnDate, items, discountType,
+    token, party, salesReturnNumber, returnDate, items, discountType, finalAmount,
     discountAmount, discountPercentage, additionalCharge, note, terms, update, id
   } = req.body;
 
@@ -67,6 +67,11 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
+
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Delivery Chalan", finalAmount, '', 'salesreturn');
+
 
     return res.status(200).json(insert);
 

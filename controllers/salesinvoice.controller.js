@@ -3,6 +3,7 @@ const salesInvoiceModel = require('../models/salesinvoice.model');
 const userModel = require('../models/user.model');
 const paymentinModel = require("../models/paymentin.model");
 const companyModel = require("../models/company.model");
+const Log = require('../helper/insertLog');
 
 
 
@@ -97,6 +98,10 @@ const add = async (req, res) => {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
 
+    // Insert partylog;
+    await Log.insertPartyLog(token, insert._id, party, "Sales", finalAmount, "", 'salesinvoice');
+
+
     return res.status(200).json(insert);
 
   } catch (err) {
@@ -172,7 +177,7 @@ const get = async (req, res) => {
         party: party || null,
         isDel: false,
         isTrash: false,
-        paymentStatus: { $ne: "1" } 
+        paymentStatus: { $ne: "1" }
       }).sort({ _id: -1 });
     }
     else {
@@ -190,13 +195,13 @@ const get = async (req, res) => {
 
     if (getData?.length > 0) {
       getData.map((d, i) => {
-        if(typeof d.dueAmount === 'string' && isNaN(parseInt(d.dueAmount)) === false) {
+        if (typeof d.dueAmount === 'string' && isNaN(parseInt(d.dueAmount)) === false) {
           totalDueAmount += parseFloat(d.dueAmount);
         }
       })
     }
 
-    
+
     return res.status(200).json({ data: getData, totalData: totalData, totalPaymentAmount, totalDueAmount });
 
   } catch (error) {

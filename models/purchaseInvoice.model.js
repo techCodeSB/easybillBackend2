@@ -84,8 +84,7 @@ const purchaseInvoiceSchema = new mongoose.Schema({
     required: true
   },
   validDate: {
-    type: Date,
-    required: true
+    type: Date
   },
   items: {
     type: [itemSchema],

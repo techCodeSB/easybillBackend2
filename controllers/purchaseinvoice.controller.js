@@ -3,6 +3,7 @@ const purchaseInvoiceModel = require('../models/purchaseInvoice.model');
 const userModel = require('../models/user.model');
 const itemModel = require('../models/item.model');
 const paymentoutModel = require('../models/paymentout.model');
+const Log = require('../helper/insertLog');
 
 
 
@@ -14,7 +15,7 @@ const add = async (req, res) => {
     paymentStatus, finalAmount, paymentAccount
   } = req.body;
 
-  if ([token, party, purchaseInvoiceNumber, invoiceDate, validDate, items, paymentStatus]
+  if ([token, party, purchaseInvoiceNumber, invoiceDate, items, paymentStatus]
     .some(field => !field || field === '')) {
     return res.status(400).json({ err: 'fill the blank' });
   }
@@ -72,6 +73,9 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Invoice creation failed' });
     }
+
+    // Insert partylog;
+    await Log.insertPartyLog(token, insert._id, party, "Purchase", finalAmount, '', 'purchaseinvoice');
 
     return res.status(200).json(insert);
 
@@ -268,8 +272,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await purchaseInvoiceModel.find({...query, isDel: false}).countDocuments();
-  let allData = await purchaseInvoiceModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await purchaseInvoiceModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await purchaseInvoiceModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

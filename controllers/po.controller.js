@@ -2,6 +2,7 @@ const { getId } = require('../helper/getIdFromToken');
 const poModel = require('../models/po.model');
 const userModel = require('../models/user.model');
 const companyModel = require("../models/company.model");
+const Log = require("../helper/insertLog");
 
 
 
@@ -9,7 +10,7 @@ const companyModel = require("../models/company.model");
 const add = async (req, res) => {
   const {
     token, party, poNumber, poDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
   if ([token, party, poNumber, poDate, validDate, items]
@@ -65,6 +66,9 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'PO creation failed' });
     }
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Purchase Order", finalAmount, 'purchaseorder');
 
     return res.status(200).json(insert);
 
@@ -251,8 +255,8 @@ const filter = async (req, res) => {
     }
   }
 
-  let totalData = await poModel.find({...query, isDel: false}).countDocuments();
-  let allData = await poModel.find({...query, isDel: false}).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
+  let totalData = await poModel.find({ ...query, isDel: false }).countDocuments();
+  let allData = await poModel.find({ ...query, isDel: false }).skip(skip).limit(limit).sort({ _id: -1 }).populate('party');
 
 
   if (party && gst) {

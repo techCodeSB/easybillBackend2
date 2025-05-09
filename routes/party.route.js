@@ -1,4 +1,4 @@
-const { add, get, remove, restore } = require("../controllers/party.controller");
+const { add, get, remove, restore, getLog } = require("../controllers/party.controller");
 const router = require("express").Router();
 
 router
@@ -16,5 +16,10 @@ router
 router
   .route("/restore")
   .post(restore);
+
+router
+  .route("/log")
+  .post(getLog)
+
 
 module.exports = router;

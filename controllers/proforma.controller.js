@@ -2,6 +2,7 @@ const { getId } = require('../helper/getIdFromToken');
 const proformaModel = require('../models/proforma.model');
 const userModel = require('../models/user.model');
 const companyModel = require("../models/company.model");
+const Log = require("../helper/insertLog");
 
 
 
@@ -9,7 +10,7 @@ const companyModel = require("../models/company.model");
 const add = async (req, res) => {
   const {
     token, party, proformaNumber, estimateDate, validDate, items, discountType, discountAmount,
-    discountPercentage, additionalCharge, note, terms, update, id
+    discountPercentage, additionalCharge, note, terms, update, id, finalAmount
   } = req.body;
 
   if ([token, party, proformaNumber, estimateDate, items]
@@ -64,6 +65,10 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Proforma creation failed' });
     }
+
+    // Insert party log
+    await Log.insertPartyLog(token, insert._id, party, "Proforma", finalAmount, '', 'proforma');
+    
 
     return res.status(200).json(insert);
 
