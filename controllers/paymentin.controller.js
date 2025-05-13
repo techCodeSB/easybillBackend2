@@ -7,7 +7,7 @@ const userModel = require("../models/user.model");
 
 
 const add = async (req, res) => {
-  const { token, party, paymentInNumber, paymentInDate,
+  const { token, party, paymentInNumber, paymentInDate, checkedInv,
     paymentMode, account, amount, details, update, id, invoiceId, dueAmount
   } = req.body;
 
@@ -48,29 +48,34 @@ const add = async (req, res) => {
 
 
     // :::::::: update SalesDue amount :::::::;
-    const finalAmount = parseFloat(dueAmount) - parseFloat(amount);
+    
+    checkedInv.forEach( async (inv, _) => {
+      
+      let due = parseFloat(inv.dueAmount) - parseFloat(amount);
+      const updateData = {
+        dueAmount: due.toString()
+      };
 
-    const updateData = {
-      dueAmount: finalAmount.toString()
-    };
+      if (due === 0) {
+        updateData.paymentStatus = '1';
+      }
+      else if (due > 0) {
+        updateData.paymentStatus = '2';
+      }
 
-    if (finalAmount === 0) {
-      updateData.paymentStatus = '1';
-    } 
-    else if (finalAmount > 0) {
-      updateData.paymentStatus = '2';
-    }
+      await salesinvoiceModel.updateOne(
+        { salesInvoiceNumber: inv.salesInvoiceNumber },
+        { $set: updateData }
+      );
 
-    await salesinvoiceModel.updateOne(
-      { salesInvoiceNumber: invoiceId },
-      { $set: updateData }
-    );
+    })
 
 
     const insert = await paymentInModel.create({
       userId: getUserData._id, companyId: getUserData.activeCompany, invoiceId,
       party, paymentInNumber, paymentInDate, paymentMode, account, amount, details
     });
+
 
     if (!insert) {
       return res.status(500).json({ err: 'Payment creation failed', create: false })
