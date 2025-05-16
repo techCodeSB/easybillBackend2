@@ -2,6 +2,7 @@ const { getId } = require("../helper/getIdFromToken");
 const paymentInModel = require("../models/paymentin.model");
 const salesinvoiceModel = require("../models/salesinvoice.model");
 const userModel = require("../models/user.model");
+const Log = require('../helper/insertLog');
 
 
 
@@ -48,10 +49,12 @@ const add = async (req, res) => {
 
 
     // :::::::: update SalesDue amount :::::::;
-    
-    checkedInv.forEach( async (inv, _) => {
-      
-      let due = parseFloat(inv.dueAmount) - parseFloat(amount);
+    let finalAmount = amount;
+    checkedInv.forEach(async (inv, _) => {
+
+      let due = parseFloat(inv.dueAmount) - parseFloat(finalAmount);
+      finalAmount = parseFloat(finalAmount) - parseFloat(inv.dueAmount);
+
       const updateData = {
         dueAmount: due.toString()
       };
@@ -80,6 +83,9 @@ const add = async (req, res) => {
     if (!insert) {
       return res.status(500).json({ err: 'Payment creation failed', create: false })
     }
+
+    // Insert partylog;
+    await Log.insertPartyLog(token, insert._id, party, "Paymentin", amount, "", 'paymentin');
 
     return res.status(200).json(insert);
 
